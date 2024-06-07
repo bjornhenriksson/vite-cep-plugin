@@ -311,40 +311,42 @@ export const cep = (opts: CepOptions) => {
         });
       }
     },
-    async writeBundle() {
-      // console.log(" BUILD END");
-      const root = "./";
-      const src = "./src";
-      const dest = "dist/cep";
-      const symlink = false;
-      const allPackages = unique(packages.concat(foundPackages));
-      copyModules({ packages: allPackages, src: root, dest, symlink });
-      if (cepConfig.copyAssets) {
-        copyFiles({
-          src: path.join(process.cwd(), src),
-          dest: path.join(process.cwd(), dest),
-          assets: cepConfig.copyAssets,
-        });
-      }
-
-      // console.log("FINISH");
-      if (isPackage) {
-        const zxpPath = await signZXP(
-          cepConfig,
-          path.join(dir, cepDist),
-          zxpDir,
-          tmpDir
-        );
-        if (isMetaPackage) {
-          await metaPackage(
-            cepConfig,
-            zipDir,
-            zxpPath,
-            src,
-            cepConfig.copyZipAssets
-          );
+    writeBundle: {
+      sequential: true,
+      order: "post",
+      async handler() {
+        const root = "./";
+        const src = "./src";
+        const dest = "dist/cep";
+        const symlink = false;
+        const allPackages = unique(packages.concat(foundPackages));
+        copyModules({ packages: allPackages, src: root, dest, symlink });
+        if (cepConfig.copyAssets) {
+          copyFiles({
+            src: path.join(process.cwd(), src),
+            dest: path.join(process.cwd(), dest),
+            assets: cepConfig.copyAssets,
+          });
         }
-      }
+        
+        if (isPackage) {
+          const zxpPath = await signZXP(
+            cepConfig,
+            path.join(dir, cepDist),
+            zxpDir,
+            tmpDir
+          );
+          if (isMetaPackage) {
+            await metaPackage(
+              cepConfig,
+              zipDir,
+              zxpPath,
+              src,
+              cepConfig.copyZipAssets
+            );
+          }
+        }
+      },
     },
     async generateBundle(output: any, bundle: any) {
       console.log(
